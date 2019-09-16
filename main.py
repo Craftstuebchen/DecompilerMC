@@ -17,8 +17,8 @@ if __name__ == "__main__":
     remapper = Remapper(file_provider)
 
     print("Please Run once the snapshot/version on your computer via Minecraft Launcher so it can download it")
-    decompiler = input("Please input you decompiler choice: fernflower or cfr (default: cfr)")
-    decompiler = decompiler if decompiler in ["fernflower", "cfr"] else "cfr"
+    decompiler = input("Please input you decompiler choice: fernflower or cfr (default: fernflower)")
+    decompiler = decompiler if decompiler in ["fernflower", "cfr"] else "fernflower"
     version = input("Please input a valid version starting from 19w36a : ") or "19w36a"
     decompVersion = remapper.make_paths(version)
     r = input('Download mappings? (y/n): ')
