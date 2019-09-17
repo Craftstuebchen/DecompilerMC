@@ -6,3 +6,4 @@ src
 main.spec
 versions
 __pycache__
+.DS_Store
