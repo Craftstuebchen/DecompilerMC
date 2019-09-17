@@ -30,8 +30,8 @@ class Remapper:
             print('URL Error')
             print(e)
 
-    def get_mappings(self, version):
-        if Path(f'mappings/{version}/client.txt').is_file():
+    def get_mappings(self, version, minecraft_side):
+        if Path(f'mappings/{version}/{minecraft_side}.txt').is_file():
             return
         path_to_json = Path(
             f'{self.file_provider.get_mincraft_folder()}/versions/{version}/{version}.json').expanduser()
@@ -41,41 +41,40 @@ class Remapper:
             path_to_json = path_to_json.resolve()
 
             with open(path_to_json) as f:
-
                 jfile = json.load(f)
-                url = jfile['downloads']['client_mappings']['url']
+                url = jfile['downloads'][f'{minecraft_side}_mappings']['url']
 
                 print(f'Downloading the mappings for {version}...')
-                self.download_file(url, f'mappings/{version}/client.txt')
+                self.download_file(url, f'mappings/{version}/{minecraft_side}.txt')
                 print('Done!')
         else:
             print(f'ERROR: Missing files')
 
-    def remap(self, version):
+    def remap(self, version, minecraft_side):
         print('=== Remapping jar using SpecialSource ====')
         t = time.time()
-        path = Path(f'{self.file_provider.get_mincraft_folder()}/versions/{version}/{version}.jar').expanduser()
-        mapp = Path(f'mappings/{version}/client.tsrg')
+        path = Path(f'{self.file_provider.get_mincraft_folder()}/versions/{version}/{version}.jar').expanduser() # todo download server jar as well
+        mapp = Path(f'mappings/{version}/{minecraft_side}.tsrg')
         specialsource = Path(self.file_provider.get_specialsource())
 
         if path.exists() and mapp.exists() and specialsource.exists():
             path = path.resolve()
             mapp = mapp.resolve()
             specialsource = specialsource.resolve()
-            out = Path(f'./src/{version}-temp.jar').resolve()
+            out = Path(f'./src/{version}-{minecraft_side}-temp.jar').resolve()
 
             subprocess.run(
                 f"java -jar \"{specialsource.__str__()}\" --in-jar \"{path.__str__()}\" --out-jar \"{out.__str__()}\" --srg-in \"{mapp.__str__()}\" --kill-lvt",
                 shell=True)
 
-            print(f'- New -> {version}-temp.jar')
+            print(f'- New -> {version}-{minecraft_side}-temp.jar')
 
             t = time.time() - t
             print('Done in %.1fs' % t)
         else:
             print(f'ERROR: Missing files')
 
-    def decompile_fern(self, decomp_version, version):
+    def decompile_fern(self, decomp_version, version, minecraft_side):
         print('=== Decompiling using FernFlower ====')
         t = time.time()
 
@@ -105,7 +104,7 @@ class Remapper:
         print('=== Decompiling using CFR ====')
         t = time.time()
 
-        path = Path(f'./src/{version}-temp.jar')
+        path = Path(f'./src/{version}-{type}-temp.jar')
         cfr = Path(self.file_provider.get_cfr())
         if path.exists() and cfr.exists():
             path = path.resolve()
@@ -125,13 +124,13 @@ class Remapper:
         else:
             print(f'ERROR: Missing files')
 
-    def re_map_mapping(self, version):
+    def re_map_mapping(self, version, minecraft_side):
         remap_primitives = {"int": "I", "double": "D", "boolean": "Z", "float": "F", "long": "J", "byte": "B",
                             "short": "S"}
         remap_file_path = lambda path: "L" + "/".join(path.split(".")) + ";" if not (
                 path in remap_primitives or path[:-2] in remap_primitives) else remap_primitives[
             path] if not "[]" in path else "[" + remap_primitives[path[:-2]]
-        with open(f'mappings/{version}/client.txt', 'r') as inputFile:
+        with open(f'mappings/{version}/{minecraft_side}.txt', 'r') as inputFile:
             file_name = {}
             for line in inputFile.readlines():
                 if line.startswith('#'):  # comment at the top, could be stripped
@@ -141,7 +140,7 @@ class Remapper:
                     obf_name = obf_name.split(":")[0]
                     file_name[remap_file_path(deobf_name)] = obf_name  # save it to compare to put the Lb
 
-        with open(f'mappings/{version}/client.txt', 'r') as inputFile, open(f'mappings/{version}/client.tsrg',
+        with open(f'mappings/{version}/{minecraft_side}.txt', 'r') as inputFile, open(f'mappings/{version}/{minecraft_side}.tsrg',
                                                                             'w+')  as outputFile:
             for line in inputFile.readlines():
                 if line.startswith('#'):  # comment at the top, could be stripped
